@@ -10,7 +10,7 @@ export const getTargets = async (idInstance: string, apiTokenInstance: string) =
     return contacts.data.map(({ name, id }) => `${name}:${id}`);
 }
 
-type StorageSettingKeys = 'idInstance' | 'apiToken' | 'loadContacts' | 'target';
+type StorageSettingKeys = 'idInstance' | 'apiToken' | 'loadContacts' | 'target' | 'error';
 
 export const getStorageSettingsDic = (forPlugin: boolean, forCreation: boolean): StorageSettingsDict<StorageSettingKeys> => {
     return {
@@ -26,7 +26,12 @@ export const getStorageSettingsDic = (forPlugin: boolean, forCreation: boolean):
         loadContacts: {
             title: 'Load targets',
             type: 'button',
-            hide: forPlugin || forCreation,
+            hide: forCreation,
+        },
+        error: {
+            title: 'Click the load target button first',
+            type: 'html',
+            hide: true,
         },
         target: {
             title: 'Target',

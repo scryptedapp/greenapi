@@ -9,15 +9,15 @@ class GreenapiProvider extends ScryptedDeviceBase implements DeviceCreator, Sett
 
     storageSettings = new StorageSettings(this, getStorageSettingsDic(true, false));
 
-
     constructor() {
         super();
 
         this.storageSettings.settings.loadContacts.onPut = async () => {
             const { apiToken, idInstance } = this.storageSettings.values;
             const contacts = await getTargets(idInstance, apiToken);
-            this.storageSettings.settings.loadContacts.choices = contacts;
-        }
+            this.console.log('Targets loaded', contacts);
+            this.storageSettings.settings.target.choices = contacts;
+        };
     }
     getSettings(): Promise<Setting[]> {
         return this.storageSettings.getSettings();
@@ -52,7 +52,12 @@ class GreenapiProvider extends ScryptedDeviceBase implements DeviceCreator, Sett
 
     async createDevice(settings: DeviceCreatorSettings, nativeId?: string): Promise<string> {
         nativeId ||= randomBytes(4).toString('hex');
-        const target = String(settings.target)?.split(':')[0];
+        const target = settings.target ? String(settings.target)?.split(':')[0] : undefined;
+
+        if (!target) {
+            return undefined;
+        }
+
         const name = `GreenAPI ${target}`;
         await this.updateDevice(nativeId, name, [ScryptedInterface.Settings, ScryptedInterface.Notifier]);
         const device = await this.getDevice(nativeId) as GreenapiNotifier;
@@ -69,10 +74,13 @@ class GreenapiProvider extends ScryptedDeviceBase implements DeviceCreator, Sett
     async getCreateDeviceSettings(): Promise<Setting[]> {
         try {
             const storageSettings = new StorageSettings(this, getStorageSettingsDic(false, true));
-            const { apiToken, idInstance } = this.storageSettings.values;
-            const contacts = await getTargets(idInstance, apiToken);
-            storageSettings.settings.target.choices = contacts;
-            this.console.log(contacts);
+            storageSettings.settings.target.choices = this.storageSettings.settings.target.choices;
+
+            this.console.log(storageSettings.settings.target.choices);
+            if (!storageSettings.settings.target.choices?.length) {
+                storageSettings.settings.error.hide = false;
+                storageSettings.settings.target.hide = true;
+            }
 
             return await storageSettings.getSettings();
         } catch (e) {
